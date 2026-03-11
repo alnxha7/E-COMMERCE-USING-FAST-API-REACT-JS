@@ -1,8 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from db import supabase
-from security import hash_password
+from security import hash_password, verify_user
 
 app = FastAPI()
 
@@ -31,10 +31,16 @@ class RegisterUser(BaseModel):
 @app.post("/register")
 def register(user: RegisterUser):
 
-    password = user.password  
-    print('length of the password is: ', len(password))
+    existing_user = supabase.table('users').select('email').eq('email', user.email).execute()
+
+    if existing_user.data:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered"
+        )
+
+    password = user.password
     hashed_password = hash_password(password)
-    print('length of the hashed password is: ', len(hashed_password))   
 
     data = {
         "name": user.name,
@@ -47,4 +53,19 @@ def register(user: RegisterUser):
     return {
         "message": "User registered successfully",
         "data": result.data
+    }
+
+class LoginUser(BaseModel):
+    email: str
+    password: str
+
+@app.post('/login')
+def login(user: LoginUser):
+    db_user = verify_user(user.email, user.password)
+    return {
+        'message': 'Login successfull..!!',
+        "user": {
+            "name": db_user["name"],
+            "email": db_user["email"]
+        }
     }

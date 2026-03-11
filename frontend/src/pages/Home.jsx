@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { Await, useNavigate } from "react-router-dom";
+import Swal from 'sweetalert2'
 
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,600;0,900;1,400;1,600&family=Montserrat:wght@200;300;400;500;600&display=swap');`;
 
@@ -70,6 +72,134 @@ function LoginModal({ onClose }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const navigate = useNavigate();
+
+  const handleSignup = async () => {
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!name || !email || !password) {
+      Swal.fire({
+        icon: "warning",
+        title: "Missing Fields",
+        text: "Please fill all fields"
+      });
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Email",
+        text: "Please enter a valid email address"
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: name,
+          email: email,
+          password: password
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+
+        Swal.fire({
+          icon: "success",
+          title: "Account Created!",
+          text: "Your account has been registered successfully.",
+          confirmButtonColor: "#000"
+        }).then(() => {
+          setMode('login');
+          setPassword("")
+        });
+
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Signup Failed",
+          text: data.detail || "Something went wrong"
+        });
+
+      }
+
+    } catch (error) {
+      console.error(error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Server Error",
+        text: "Unable to connect to server"
+      });
+    }
+  };
+
+  const handleLogin = async() => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email || !password) {
+      Swal.fire({
+        icon: "warning",
+        title: "Missing Fields",
+        text: "Please fill all fields"
+      });
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Email",
+        text: "Please enter a valid email address"
+      });
+      return;
+    }
+    
+    try {
+      const response = await fetch('http://127.0.0.1:8000/login', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: name,
+          email: email,
+          password: password
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        navigate('/dashboard')
+        onClose();
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Signup Failed",
+          text: data.detail || "Something went wrong"
+        });
+      }
+
+    } catch (error) {
+      console.error(error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error
+      });
+    }
+  }
 
   return (
     <div style={{ position:"fixed", inset:0, zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center" }}
@@ -155,6 +285,7 @@ function LoginModal({ onClose }) {
               cursor:"pointer", borderRadius:2, transition:"all 0.3s",
               boxShadow:"0 4px 20px rgba(184,115,51,0.3)" }}
               onMouseEnter={e => { e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 8px 28px rgba(184,115,51,0.45)"; }}
+              onClick={mode === "login" ? handleLogin : handleSignup}
               onMouseLeave={e => { e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="0 4px 20px rgba(184,115,51,0.3)"; }}>
               {mode === "login" ? "Sign In to Rustique" : "Create My Account"}
             </button>
