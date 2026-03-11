@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────
 import { useState } from "react";
 import Sidebar   from "./Sidebar";
-import TopBar    from "./TopBar";
+import TopBar    from "./Topbar";
 import OverviewPage from "./OverviewPage";
 import { OrdersPage, WishlistPage, ProfilePage, AddressesPage, NotificationsPage } from "./Pages";
 

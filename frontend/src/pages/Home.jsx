@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Await, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2'
 
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,600;0,900;1,400;1,600&family=Montserrat:wght@200;300;400;500;600&display=swap');`;
@@ -73,6 +73,13 @@ function LoginModal({ onClose }) {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (localStorage.getItem("loggedInUser")) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
 
   const handleSignup = async () => {
 
@@ -180,12 +187,13 @@ function LoginModal({ onClose }) {
       const data = await response.json();
 
       if (response.ok) {
-        navigate('/dashboard')
+        localStorage.setItem("loggedInUser", JSON.stringify(data.user));
+        navigate('/dashboard');
         onClose();
       } else {
         Swal.fire({
           icon: "error",
-          title: "Signup Failed",
+          title: "Login Failed",
           text: data.detail || "Something went wrong"
         });
       }
