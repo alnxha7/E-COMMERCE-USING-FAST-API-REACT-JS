@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2'
 
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,600;0,900;1,400;1,600&family=Montserrat:wght@200;300;400;500;600&display=swap');`;
@@ -67,18 +66,11 @@ const RustiqueLogo = ({ dark = false, size = 44}) => {
 };
 
 // ── Login Modal ──
-function LoginModal({ onClose }) {
+function LoginModal({ onClose, onLoginSuccess  }) {
   const [mode, setMode] = useState("login"); // "login" | "signup"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (localStorage.getItem("loggedInUser")) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [navigate]);
 
 
   const handleSignup = async () => {
@@ -150,64 +142,44 @@ function LoginModal({ onClose }) {
     }
   };
 
-  const handleLogin = async() => {
+  const handleLogin = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!email || !password) {
-      Swal.fire({
-        icon: "warning",
-        title: "Missing Fields",
-        text: "Please fill all fields"
-      });
+      Swal.fire({ icon: "warning", title: "Missing Fields", text: "Please fill all fields" });
+      return;
+    }
+    if (!emailRegex.test(email)) {
+      Swal.fire({ icon: "error", title: "Invalid Email", text: "Please enter a valid email address" });
       return;
     }
 
-    if (!emailRegex.test(email)) {
-      Swal.fire({
-        icon: "error",
-        title: "Invalid Email",
-        text: "Please enter a valid email address"
-      });
-      return;
-    }
-    
     try {
       const response = await fetch('http://127.0.0.1:8000/login', {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name: name,
-          email: email,
-          password: password
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
       });
 
       const data = await response.json();
+      console.log("Login response:", data);
 
       if (response.ok) {
+        // ✅ Store both token AND user info
+        localStorage.setItem("access_token", data.access_token);
         localStorage.setItem("loggedInUser", JSON.stringify(data.user));
-        navigate('/dashboard');
+
+        onLoginSuccess?.(data.user);
         onClose();
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Login Failed",
-          text: data.detail || "Something went wrong"
-        });
+        Swal.fire({ icon: "error", title: "Login Failed", text: data.detail || "Something went wrong" });
       }
 
     } catch (error) {
       console.error(error);
-
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error
-      });
+      Swal.fire({ icon: "error", title: "Error", text: "Unable to connect to server" });
     }
-  }
+  };
 
   return (
     <div style={{ position:"fixed", inset:0, zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center" }}
@@ -334,7 +306,7 @@ function LoginModal({ onClose }) {
   );
 }
 
-export default function RustiquePage() {
+export default function RustiquePage({onLoginSuccess}) {
   const [scrollY, setScrollY] = useState(0);
   const [cart, setCart] = useState([]);
   const [selectedColors, setSelectedColors] = useState({});
@@ -447,7 +419,7 @@ export default function RustiquePage() {
       `}</style>
 
       {/* ── LOGIN MODAL ── */}
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLoginSuccess={onLoginSuccess} />}
 
       {/* ── ANNOUNCEMENT BANNER ── */}
       <div style={{ background:"#1a1a1a", padding:"10px 0", textAlign:"center", overflow:"hidden", position:"fixed", top:0, left:0, right:0, zIndex:200 }}>

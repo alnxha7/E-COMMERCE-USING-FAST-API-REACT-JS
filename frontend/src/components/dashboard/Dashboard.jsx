@@ -1,10 +1,9 @@
 // ─────────────────────────────────────────────
 //  Rustique Dashboard — Main Layout
-//  Entry point: import this as <Dashboard />
 // ─────────────────────────────────────────────
 import { useState } from "react";
-import Sidebar   from "./Sidebar";
-import TopBar    from "./Topbar";
+import Sidebar      from "./Sidebar";
+import TopBar       from "./Topbar";
 import OverviewPage from "./OverviewPage";
 import { OrdersPage, WishlistPage, ProfilePage, AddressesPage, NotificationsPage } from "./Pages";
 
@@ -22,8 +21,8 @@ function PageRenderer({ page }) {
   }
 }
 
-export default function Dashboard() {
-  const [activePage,  setActivePage]  = useState("overview");
+export default function Dashboard({ onLogout }) {
+  const [activePage,       setActivePage]       = useState("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
@@ -32,55 +31,46 @@ export default function Dashboard() {
         ${FONTS}
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Montserrat', sans-serif; background: #F7F3EE; }
-
         ::-webkit-scrollbar       { width: 4px; }
         ::-webkit-scrollbar-track { background: #F7F3EE; }
         ::-webkit-scrollbar-thumb { background: linear-gradient(#b87333, #5C3D1E); border-radius: 2px; }
-
         @keyframes pageIn {
           from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .page-content-area {
-          animation: pageIn 0.45s cubic-bezier(.16,1,.3,1) both;
-        }
+        .page-content-area { animation: pageIn 0.45s cubic-bezier(.16,1,.3,1) both; }
       `}</style>
 
-      <div style={{
-        display: "flex",
-        minHeight: "100vh",
-        background: "#F7F3EE",
-      }}>
-        {/* ── Sidebar ── */}
-        <Sidebar
-          active={activePage}
-          setActive={setActivePage}
-          collapsed={sidebarCollapsed}
-          setCollapsed={setSidebarCollapsed}
-        />
+      <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#F7F3EE" }}>
 
-        {/* ── Main area ── */}
+        {/* ── Sidebar — independent scroll ── */}
+        <div style={{ height: "100vh", overflowY: "auto", overflowX: "hidden", flexShrink: 0 }}>
+          <Sidebar
+            active={activePage}
+            setActive={setActivePage}
+            collapsed={sidebarCollapsed}
+            setCollapsed={setSidebarCollapsed}
+            onLogout={onLogout}   
+          />
+        </div>
+
+        {/* ── Main area — independent scroll ── */}
         <div style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          minWidth: 0,
+          flex: 1, display: "flex", flexDirection: "column",
+          minWidth: 0, height: "100vh", overflow: "hidden",
           transition: "margin-left 0.35s cubic-bezier(.16,1,.3,1)",
         }}>
-          {/* Top bar */}
+          {/* TopBar — pinned, never scrolls */}
           <TopBar activePage={activePage} />
 
-          {/* Page content */}
-          <main style={{
-            flex: 1,
-            padding: "32px 36px 48px",
-            overflowY: "auto",
-          }}>
+          {/* Page content — only this scrolls */}
+          <main style={{ flex: 1, padding: "32px 36px 48px", overflowY: "auto", overflowX: "hidden" }}>
             <div key={activePage} className="page-content-area">
               <PageRenderer page={activePage} />
             </div>
           </main>
         </div>
+
       </div>
     </>
   );
