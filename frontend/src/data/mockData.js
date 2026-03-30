@@ -2,10 +2,20 @@
 //  Rustique Dashboard — Mock Data
 // ─────────────────────────────────────────────
 
+const getStoredUser = () => {
+  try {
+    const userStr = localStorage.getItem("loggedInUser");
+    if (userStr) return JSON.parse(userStr);
+  } catch (err) {
+    console.error("Error reading stored user:", err);
+  }
+  return null;
+};
+
 export const currentUser = {
   id: "usr_001",
-  name: "Amara Sinclair",
-  email: "amara@rustique.com",
+  get name() { return getStoredUser()?.name || "Amara Sinclair"; },
+  get email() { return getStoredUser()?.email || "amara@rustique.com"; },
   avatar: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&q=80&fit=crop",
   role: "Premium Member",
   memberSince: "March 2022",
